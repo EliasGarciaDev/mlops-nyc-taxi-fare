@@ -1,0 +1,20 @@
+# Auto-detect text files and ensure LF line endings
+* text=auto eol=lf
+
+*.py text eol=lf
+*.js text eol=lf
+*.html text eol=lf
+*.css text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+*.json text eol=lf
+*.toml text eol=lf
+*.example text eol=lf
+
+# Binary files
+*.png binary
+*.jpg binary
+*.pdf binary
+*.xlsx binary
+*.joblib binary
+*.parquet binary
