@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="pt-BR" id="html-root">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NYC Taxi Fare</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="overflow-hidden" style="font-family:'Inter',system-ui,sans-serif;">
+
+  <!-- Mapa full-screen -->
+  <div id="map"></div>
+
+  <!-- Card flutuante -->
+  <div id="card" class="card">
+
+    <!-- Header: título + relógio + botão idioma -->
+    <div class="flex items-start justify-between mb-1">
+      <div class="flex-1 min-w-0">
+        <h1 class="text-xl font-bold text-gray-900 tracking-tight leading-tight" data-i18n="title">NYC Taxi Fare</h1>
+        <p class="text-[11px] text-gray-400 mt-0.5" data-i18n="subtitle">Arraste os marcadores ou busque endereços</p>
+      </div>
+      <div class="flex items-center gap-1 ml-2 flex-shrink-0">
+
+        <!-- Botão de acessibilidade -->
+        <div class="relative">
+          <button id="a11y-btn" onclick="toggleA11yPanel()"
+                  class="flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-100 text-gray-500 transition-colors"
+                  title="Acessibilidade / Accessibility" aria-label="Opções de acessibilidade">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="5" r="2" fill="currentColor" stroke="none"/>
+              <path d="M6 10h12"/>
+              <path d="M9 10v5l-2 5"/>
+              <path d="M15 10v5l2 5"/>
+              <path d="M9 15h6"/>
+            </svg>
+          </button>
+          <div id="a11y-panel" class="a11y-panel hidden">
+            <p class="a11y-panel-title">Acessibilidade</p>
+            <!-- Tamanho de fonte -->
+            <div class="a11y-section">
+              <span class="a11y-label">Texto</span>
+              <div class="a11y-controls">
+                <button onclick="a11yFontStep(-1)" class="a11y-ctrl-btn" title="Diminuir fonte" aria-label="Diminuir tamanho do texto">A−</button>
+                <span id="a11y-font-display" class="a11y-font-display">A</span>
+                <button onclick="a11yFontStep(1)"  class="a11y-ctrl-btn" title="Aumentar fonte" aria-label="Aumentar tamanho do texto">A+</button>
+              </div>
+            </div>
+            <!-- Toggles -->
+            <button class="a11y-toggle-btn" data-a11y="contrast" onclick="a11yToggle('contrast')" aria-pressed="false">
+              <span>🌗</span><span>Alto contraste</span>
+            </button>
+            <button class="a11y-toggle-btn" data-a11y="motion" onclick="a11yToggle('motion')" aria-pressed="false">
+              <span>✋</span><span>Reduzir animações</span>
+            </button>
+            <button class="a11y-toggle-btn" data-a11y="pointer" onclick="a11yToggle('pointer')" aria-pressed="false">
+              <span>🖱</span><span>Ponteiro grande</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Botão de idioma -->
+        <div class="relative">
+          <button id="lang-btn" onclick="toggleLangMenu()"
+                  class="flex items-center gap-1 px-2 h-8 rounded-full hover:bg-gray-100 text-sm font-semibold text-gray-600 transition-colors"
+                  title="Idioma / Language" aria-label="Selecionar idioma">
+            🌐 <span id="lang-code">PT</span>
+          </button>
+          <div id="lang-menu" class="lang-menu hidden">
+            <p class="lang-menu-title" data-i18n="lang-title">Idioma</p>
+            <button onclick="applyLanguage('pt')">🇧🇷 Português</button>
+            <button onclick="applyLanguage('en')">🇺🇸 English</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Relógio -->
+    <div id="clock" class="text-[11px] font-mono text-gray-400 mb-4"></div>
+
+    <!-- Toggle de tipo -->
+    <div class="flex rounded-xl border border-gray-200 p-1 mb-3 gap-1 bg-gray-50">
+      <button id="btn-yellow" onclick="selectTaxi('yellow')"
+              class="taxi-btn taxi-active flex-1 text-sm font-semibold py-2 rounded-lg transition-all"
+              data-i18n="btn-yellow">🚕 Yellow Cab</button>
+      <button id="btn-green" onclick="selectTaxi('green')"
+              class="taxi-btn flex-1 text-sm font-semibold py-2 rounded-lg transition-all text-gray-500"
+              data-i18n="btn-green">🟢 Green Cab</button>
+    </div>
+
+    <!-- Aviso Green Taxi (amber=info, red=bloqueio) -->
+    <div id="green-warning" class="hidden warning-amber mb-3 p-3 rounded-xl text-xs flex gap-2 items-start">
+      <span class="flex-shrink-0 mt-px">⚠️</span>
+      <span data-i18n="green-warning">Green Taxi não opera em Manhattan. Mova o embarque para outro bairro.</span>
+    </div>
+
+    <!-- Aviso origem = destino -->
+    <div id="too-close-warning" class="hidden warning-red mb-3 p-3 rounded-xl text-xs flex gap-2 items-start">
+      <span class="flex-shrink-0 mt-px">📍</span>
+      <span data-i18n="too-close">Origem e destino estão muito próximos. Ajuste os pontos no mapa.</span>
+    </div>
+
+    <!-- Aviso de ponto fora da área atendida -->
+    <div id="outside-warning" class="hidden warning-red mb-3 p-3 rounded-xl text-xs flex gap-2 items-start" role="alert">
+      <span class="flex-shrink-0 mt-px">🚫</span>
+      <span id="outside-warning-text" data-i18n="outside">Fora da área atendida pelos táxis de Nova York. Ajuste o ponto para dentro da cidade.</span>
+    </div>
+
+    <!-- Falha ao carregar os limites da cidade -->
+    <div id="zones-warning" class="hidden warning-red mb-3 p-3 rounded-xl text-xs flex gap-2 items-start" role="alert">
+      <span class="flex-shrink-0 mt-px">⚠️</span>
+      <span data-i18n="zones-error">Não foi possível carregar os limites da cidade. Recarregue a página.</span>
+    </div>
+
+    <!-- Badge de aeroporto -->
+    <div id="airport-badge" class="hidden mb-3 px-3 py-2 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-700 flex items-center gap-2">
+      <span id="airport-badge-text"></span>
+    </div>
+
+    <!-- Campos de localização -->
+    <div class="mb-3 space-y-1">
+      <div class="flex items-center gap-2.5">
+        <div class="flex-shrink-0 w-2.5 h-2.5 rounded-full bg-green-500 ring-2 ring-green-200 ml-0.5"></div>
+        <div class="flex-1 relative">
+          <input id="origin-input" type="text" autocomplete="off"
+                 data-i18n-ph="origin-ph"
+                 placeholder="Local de embarque"
+                 class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white placeholder-gray-400" />
+          <div id="origin-dropdown" class="dropdown hidden"></div>
+        </div>
+      </div>
+      <div class="ml-[13px] h-3 w-px bg-gray-200"></div>
+      <div class="flex items-center gap-2.5">
+        <div class="flex-shrink-0 w-2.5 h-2.5 rounded-full bg-red-500 ring-2 ring-red-200 ml-0.5"></div>
+        <div class="flex-1 relative">
+          <input id="dest-input" type="text" autocomplete="off"
+                 data-i18n-ph="dest-ph"
+                 placeholder="Para onde vamos?"
+                 class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white placeholder-gray-400" />
+          <div id="dest-dropdown" class="dropdown hidden"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="flex gap-2 mb-4">
+      <div class="flex-1 bg-gray-50 rounded-xl px-3 py-2.5 text-center border border-gray-100">
+        <div id="distance-display" class="text-lg font-bold text-gray-800">-</div>
+        <div class="text-[10px] text-gray-400 uppercase tracking-wider mt-0.5" data-i18n="miles">milhas</div>
+      </div>
+      <div class="flex-1 bg-gray-50 rounded-xl px-3 py-2.5 text-center border border-gray-100">
+        <div id="duration-display" class="text-lg font-bold text-gray-800">-</div>
+        <div class="text-[10px] text-gray-400 uppercase tracking-wider mt-0.5" data-i18n="minutes">minutos</div>
+      </div>
+    </div>
+
+    <!-- Botão calcular -->
+    <button id="calc-btn" onclick="calculateFare()"
+            data-i18n="calc-btn"
+            class="w-full py-3 bg-gray-900 hover:bg-gray-700 active:scale-[0.98] text-white text-sm font-semibold rounded-xl transition-all mb-4 disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100">
+      Calcular Rota →
+    </button>
+
+    <!-- Resultado -->
+    <div id="result" class="hidden">
+      <div class="border-t border-gray-100 pt-4 text-center">
+        <p class="text-[11px] text-gray-400 uppercase tracking-wider mb-1" data-i18n="fare-label">Tarifa estimada</p>
+        <div id="fare-value" class="text-4xl font-bold text-gray-900 mb-1">$0,00</div>
+        <p id="trip-summary" class="text-xs text-gray-400"></p>
+        <p id="time-note" class="text-[10px] text-gray-400 mt-1 leading-tight"></p>
+      </div>
+      <button id="explain-btn" onclick="toggleExplainer()"
+              data-i18n="explain-down"
+              class="w-full mt-3 text-xs text-blue-500 hover:text-blue-700 py-2 transition-colors font-medium">
+        Entender esta estimativa ↓
+      </button>
+      <div id="explainer" class="hidden mt-2 rounded-xl bg-gray-50 border border-gray-100 p-3 text-xs space-y-1"></div>
+    </div>
+
+  </div>
+
+  <!-- Hint inicial -->
+  <div id="drag-hint"
+       class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-900/80 text-white text-xs px-4 py-2 rounded-full pointer-events-none transition-opacity duration-700 backdrop-blur-sm"
+       data-i18n="hint">
+    📍 Arraste os marcadores para ajustar a rota
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="zones.js"></script>
+  <script src="explainer.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
