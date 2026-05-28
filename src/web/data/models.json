@@ -1,0 +1,61 @@
+{
+  "generated_from": "models/<frota>/current.json",
+  "flat_fare_amount": 70.0,
+  "minimum_total_amount": 4.5,
+  "fleets": {
+    "yellow": {
+      "taxi_type": "yellow",
+      "intercept": 8.322615627547119,
+      "coefficients": {
+        "trip_distance": 3.893330161200645,
+        "hour_of_day": 0.06832917806327199,
+        "day_of_week": 0.1293583344587654,
+        "is_weekend": -1.7028356324079539,
+        "is_airport_trip": 4.015315351932339,
+        "is_congestion_zone": 2.07486936631626,
+        "is_rate_jfk": -2.406817498792978,
+        "is_rate_newark": 25.147886305790422,
+        "is_rate_nassau_westchester": 26.647602294217528,
+        "is_rate_negotiated": 37.884442892370345
+      },
+      "rmse": 5.399805532951878,
+      "training_samples": 5384002,
+      "model_version": "yellow-20260912T234604194Z",
+      "flat_fare_excess": 12.239488248739406,
+      "rmse_by_borough": {
+        "Manhattan": 4.469793747012366,
+        "Brooklyn": 6.9395585416910714,
+        "Queens": 10.352410818014667,
+        "Bronx": 6.310359307333344,
+        "Staten Island": 20.535458662565972,
+        "EWR": 12.27807210935977
+      }
+    },
+    "green": {
+      "taxi_type": "green",
+      "intercept": 7.0559520226821615,
+      "coefficients": {
+        "trip_distance": 4.099723899138154,
+        "hour_of_day": 0.07763178601563814,
+        "day_of_week": 0.11189042946034422,
+        "is_weekend": -1.467748189296221,
+        "is_airport_trip": 1.6444487657670301,
+        "is_congestion_zone": 3.726445015928059,
+        "is_rate_jfk": 3.472410054111354,
+        "is_rate_newark": 18.55947467209486,
+        "is_rate_nassau_westchester": 21.018655881397653,
+        "is_rate_negotiated": 7.492854540812227
+      },
+      "rmse": 5.98773144013609,
+      "training_samples": 96569,
+      "model_version": "green-20260912T234629041Z",
+      "flat_fare_excess": null,
+      "rmse_by_borough": {
+        "Manhattan": 3.609738116189952,
+        "Brooklyn": 10.087687709259967,
+        "Queens": 7.084627560241828,
+        "Bronx": 7.247593685621648
+      }
+    }
+  }
+}
