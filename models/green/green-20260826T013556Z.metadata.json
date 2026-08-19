@@ -1,0 +1,39 @@
+{
+  "model_version": "green-20260826T013556Z",
+  "taxi_type": "green",
+  "trained_at": "2026-08-26T01:35:56.635412+00:00",
+  "training_months": [
+    "2024-01",
+    "2024-02",
+    "2024-03"
+  ],
+  "validation_cutoff": "2024-03-01T00:00:00",
+  "target_column": "fare_amount",
+  "feature_order": [
+    "trip_distance",
+    "hour_of_day",
+    "day_of_week",
+    "is_weekend",
+    "trip_duration_minutes",
+    "is_airport_trip",
+    "is_congestion_zone",
+    "RatecodeID"
+  ],
+  "train_metrics": {
+    "rmse": 4.0756601259004,
+    "mae": 1.0127060592240409,
+    "r2": 0.8830840516099323,
+    "sample_count": 96569
+  },
+  "validation_metrics": {
+    "rmse": 4.856509602374326,
+    "mae": 1.1050152845233316,
+    "r2": 0.8626953351803285,
+    "sample_count": 51496
+  },
+  "library_versions": {
+    "scikit-learn": "1.5.0",
+    "pandas": "2.2.0",
+    "numpy": "1.26.4"
+  }
+}

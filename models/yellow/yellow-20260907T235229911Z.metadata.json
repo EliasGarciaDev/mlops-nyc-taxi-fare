@@ -1,0 +1,233 @@
+{
+  "model_version": "yellow-20260907T235229911Z",
+  "taxi_type": "yellow",
+  "trained_at": "2026-09-07T23:52:29.911060+00:00",
+  "training_months": [
+    "2024-01",
+    "2024-02",
+    "2024-03"
+  ],
+  "validation_cutoff": "2024-03-01T00:00:00",
+  "target_column": "regulated_total",
+  "feature_order": [
+    "trip_distance",
+    "hour_of_day",
+    "day_of_week",
+    "is_weekend",
+    "is_airport_trip",
+    "is_congestion_zone",
+    "is_rate_jfk",
+    "is_rate_newark",
+    "is_rate_nassau_westchester",
+    "is_rate_negotiated"
+  ],
+  "train_metrics": {
+    "rmse": 5.105000163053603,
+    "mae": 2.775587760759541,
+    "r2": 0.9270025060194541,
+    "sample_count": 5384002
+  },
+  "validation_metrics": {
+    "rmse": 5.399805532951878,
+    "mae": 2.9441921598085803,
+    "r2": 0.924555001771397,
+    "sample_count": 2997985
+  },
+  "library_versions": {
+    "scikit-learn": "1.5.0",
+    "pandas": "2.2.0",
+    "numpy": "1.26.4"
+  },
+  "reference_profile": {
+    "sample_count": 5384002,
+    "bins": {
+      "trip_distance": {
+        "feature": "trip_distance",
+        "edges": [
+          0.01,
+          0.67,
+          0.9,
+          1.12,
+          1.39,
+          1.69,
+          2.06,
+          2.61,
+          3.72,
+          8.22,
+          176.43
+        ],
+        "reference_shares": [
+          0.09782982992948368,
+          0.09457908819498953,
+          0.10444052583932918,
+          0.1012362179657437,
+          0.10163072004802376,
+          0.09943755592958546,
+          0.09996504458950796,
+          0.10070241430073763,
+          0.10013276369511007,
+          0.10004583950748903
+        ],
+        "categories": null
+      },
+      "hour_of_day": {
+        "feature": "hour_of_day",
+        "edges": [
+          0.0,
+          7.0,
+          10.0,
+          12.0,
+          13.0,
+          15.0,
+          17.0,
+          18.0,
+          20.0,
+          21.0,
+          23.0
+        ],
+        "reference_shares": [
+          0.08439112764074011,
+          0.10828617819978521,
+          0.09727373801124145,
+          0.05480570029505932,
+          0.11808836623760541,
+          0.12792584400971618,
+          0.07037850283116537,
+          0.1377558923640816,
+          0.05665376795922438,
+          0.14444088245138095
+        ],
+        "categories": null
+      },
+      "day_of_week": {
+        "feature": "day_of_week",
+        "edges": [],
+        "reference_shares": [
+          0.12657220409650666,
+          0.14237364696372698,
+          0.15766803206982463,
+          0.1705614150960568,
+          0.14062531923279376,
+          0.14465076350268816,
+          0.11754861903840304,
+          0.0
+        ],
+        "categories": [
+          0.0,
+          1.0,
+          2.0,
+          3.0,
+          4.0,
+          5.0,
+          6.0
+        ]
+      },
+      "is_weekend": {
+        "feature": "is_weekend",
+        "edges": [],
+        "reference_shares": [
+          0.7378006174589088,
+          0.2621993825410912,
+          0.0
+        ],
+        "categories": [
+          0.0,
+          1.0
+        ]
+      },
+      "is_airport_trip": {
+        "feature": "is_airport_trip",
+        "edges": [],
+        "reference_shares": [
+          0.9015232535203367,
+          0.09847674647966327,
+          0.0
+        ],
+        "categories": [
+          0.0,
+          1.0
+        ]
+      },
+      "is_congestion_zone": {
+        "feature": "is_congestion_zone",
+        "edges": [],
+        "reference_shares": [
+          0.2704763111157834,
+          0.7295236888842166,
+          0.0
+        ],
+        "categories": [
+          0.0,
+          1.0
+        ]
+      },
+      "is_rate_jfk": {
+        "feature": "is_rate_jfk",
+        "edges": [],
+        "reference_shares": [
+          0.9667910598844502,
+          0.033208940115549736,
+          0.0
+        ],
+        "categories": [
+          0.0,
+          1.0
+        ]
+      },
+      "is_rate_newark": {
+        "feature": "is_rate_newark",
+        "edges": [],
+        "reference_shares": [
+          0.9973824303928565,
+          0.002617569607143534,
+          0.0
+        ],
+        "categories": [
+          0.0,
+          1.0
+        ]
+      },
+      "is_rate_nassau_westchester": {
+        "feature": "is_rate_nassau_westchester",
+        "edges": [],
+        "reference_shares": [
+          0.9978309814892342,
+          0.0021690185107657834,
+          0.0
+        ],
+        "categories": [
+          0.0,
+          1.0
+        ]
+      },
+      "is_rate_negotiated": {
+        "feature": "is_rate_negotiated",
+        "edges": [],
+        "reference_shares": [
+          0.9969353651800278,
+          0.0030646348199722066,
+          0.0
+        ],
+        "categories": [
+          0.0,
+          1.0
+        ]
+      }
+    }
+  },
+  "trigger": null,
+  "flat_fare_calibration": {
+    "mean_excess": 12.239488248739406,
+    "sample_count": 171939
+  },
+  "segment_errors": {
+    "rmse_by_borough": {
+      "Manhattan": 4.469793747012366,
+      "Brooklyn": 6.9395585416910714,
+      "Queens": 10.352410818014667,
+      "Bronx": 6.310359307333344,
+      "Staten Island": 20.535458662565972,
+      "EWR": 12.27807210935977
+    }
+  }
+}
