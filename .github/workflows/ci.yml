@@ -1,0 +1,40 @@
+# Verificação contínua: o mesmo make check + make test que rodam localmente.
+# O Makefile é a fonte da verdade dos comandos; o workflow só provê o ambiente.
+# Pré-requisito do retreino agendado da Fase 5, que vai depender de um repositório
+# comprovadamente verde antes de publicar um artefato novo.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # A versão do Python é fixada aqui de propósito : o requires-python do
+      # pyproject declara 3.12 mas não tem como impor - o CI é quem impõe.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      # Os testes de tests/web usam apenas node:test e node:assert - sem npm install. A versão
+      # é fixada porque o glob de `node --test` só é expandido pelo runner a partir da 21; o
+      # Makefile deixa o shell expandir, então qualquer versão serve, mas fixar evita surpresa.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Instalar dependências
+        run: pip install -r requirements-dev.txt
+
+      - name: Lint e verificação de tipos
+        run: make check PYTHON=python
+
+      - name: Testes Python e JavaScript
+        run: make test PYTHON=python
