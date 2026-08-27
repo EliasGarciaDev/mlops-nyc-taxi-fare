@@ -1,0 +1,69 @@
+# Ciclo autônomo de retreino. Roda sozinho, sem ninguém no comando: avalia se o modelo em
+# produção precisa ser substituído, reverte para a versão anterior quando ela é melhor,
+# treina o challenger e o promove apenas se ele vencer o campeão na mesma janela.
+#
+# O dia 5 existe porque a TLC publica cada mês com atraso: rodar antes disso encontraria o
+# mês ainda não publicado e o ciclo se seguraria sem fazer nada.
+#
+# Também roda sob demanda, e é assim que o ciclo é demonstrado: escolher a frota verde e um
+# mês publicado faz o sistema decidir, treinar, disputar o gate e promover - ou reprovar - em
+# cerca de um minuto, com todo o raciocínio no log estruturado.
+
+name: Autopilot
+
+on:
+  schedule:
+    - cron: "0 6 5 * *"
+  workflow_dispatch:
+    inputs:
+      month:
+        description: "Mês publicado a considerar (AAAA-MM). Vazio usa o mais recente."
+        required: false
+      taxi_type:
+        description: "Frota. Vazio roda as duas; 'green' termina em cerca de um minuto."
+        required: false
+        type: choice
+        default: ""
+        options: ["", "green", "yellow"]
+
+jobs:
+  retrain:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Instalar dependências
+        run: pip install -r requirements-dev.txt
+
+      # O registro de modelos é recuperado e devolvido ao cache: sem ele cada execução
+      # começaria sem campeão, promoveria qualquer coisa como primeira versão e o gate
+      # nunca teria contra o que comparar.
+      - name: Recuperar o registro de modelos
+        uses: actions/cache@v4
+        with:
+          path: models
+          key: models-${{ github.run_id }}
+          restore-keys: models-
+
+      # Os argumentos são montados condicionalmente porque a CLI trata a ausência de cada um
+      # como "decida sozinho" - que é o modo agendado. Passá-los vazios viraria erro.
+      - name: Executar o ciclo autônomo
+        run: |
+          python -m src.cli.autopilot \
+            ${{ inputs.month && format('--month {0}', inputs.month) || '' }} \
+            ${{ inputs.taxi_type && format('--taxi-type {0}', inputs.taxi_type) || '' }}
+
+      # O artefato sobe mesmo quando o ciclo falha: é o que permite auditar depois por que
+      # uma execução não agiu, sem depender de alguém ter visto o log na hora.
+      - name: Publicar o registro resultante
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: models-${{ github.run_number }}
+          path: models/
+          retention-days: 90
