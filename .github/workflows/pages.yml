@@ -1,0 +1,60 @@
+# Publica a interface no GitHub Pages.
+#
+# O Pages serve arquivo estático e nada mais: não há processo para responder /predict. Como o
+# modelo é uma regressão linear, a estimativa é calculada no navegador com os mesmos
+# coeficientes que a API serviria - exportados por scripts/export_static_models.py e versionados
+# em src/web/data/models.json. Quem faz a conta no cliente é a mesma função que o painel XAI já
+# usava para reproduzir a resposta do servidor, então não existem duas implementações do modelo.
+#
+# O que a versão publicada não tem é a busca de endereços, que depende do proxy do backend
+#  - a interface avisa e o mapa continua inteiro, porque arrastar marcadores é o
+# fluxo principal e não precisa de rede.
+
+name: Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Uma publicação por vez, sem cancelar a que já está no ar.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # Falhar aqui é melhor que publicar uma interface que não calcula: sem o arquivo de
+      # modelos, a página sobe, desenha o mapa e não responde nada ao clicar em calcular.
+      - name: Verificar que os modelos estáticos foram exportados
+        run: |
+          test -f src/web/data/models.json \
+            || { echo "src/web/data/models.json ausente. Rode: make export-static"; exit 1; }
+          test -f src/web/data/taxi_zones.json \
+            || { echo "src/web/data/taxi_zones.json ausente. Rode: make map"; exit 1; }
+
+      # `enablement: true` liga o Pages pelo próprio workflow. Sem isto, a primeira execução
+      # num repositório novo falha com "Get Pages site failed / Not Found" e exige alguém abrir
+      # Settings e configurar à mão — um passo invisível que não está em lugar nenhum do código.
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: src/web
+
+      - id: deploy
+        uses: actions/deploy-pages@v4
