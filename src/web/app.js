@@ -329,21 +329,31 @@ function setMarkerActive(marker, active) {
 
 let geocodingAvailable = true;
 
+function localZoneName(latlng) {
+  if (typeof taxiZones !== 'undefined' && taxiZones.loaded) {
+    const z = taxiZones.at(latlng);
+    return z ? `${z.zone}, ${z.borough}` : '';
+  }
+  return '';
+}
+
 async function reverseGeocode(latlng) {
-  // Numa publicação estática não há proxy de geocodificação. Depois do primeiro 404 as
-  // tentativas param: cada arrasto de marcador dispararia uma, e o console encheria de erros
-  // que não são erros - só a ausência de um recurso que esta versão não tem.
-  if (!geocodingAvailable) return '';
+  // Numa publicação estática não há proxy de geocodificação. Quando o proxy não está
+  // disponível, resolvemos o nome do local diretamente pelas 263 zonas da TLC.
+  if (!geocodingAvailable) return localZoneName(latlng);
   try {
     const r = await fetch(`/geocode/reverse?lat=${latlng.lat}&lon=${latlng.lng}`);
     if (r.status === 404) {
       geocodingAvailable = false;
-      return '';
+      return localZoneName(latlng);
     }
-    if (!r.ok) return '';
+    if (!r.ok) return localZoneName(latlng);
     const d = await r.json();
-    return d.display_name?.split(',').slice(0, 2).join(', ') ?? '';
-  } catch { return ''; }
+    return d.display_name?.split(',').slice(0, 2).join(', ') ?? localZoneName(latlng);
+  } catch {
+    geocodingAvailable = false;
+    return localZoneName(latlng);
+  }
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -446,25 +456,50 @@ async function fetchPlaces(q) {
   }
 }
 
+function searchZonesLocally(q) {
+  if (typeof taxiZones === 'undefined' || !taxiZones.loaded || !taxiZones.zones) return [];
+  const normQ = q.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+  if (!normQ) return [];
+  const matches = [];
+  for (const z of taxiZones.zones) {
+    const zoneName = z.zone.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const boroughName = z.borough.toLowerCase();
+    if (zoneName.includes(normQ) || boroughName.includes(normQ)) {
+      const lat = (z.bbox[1] + z.bbox[3]) / 2;
+      const lon = (z.bbox[0] + z.bbox[2]) / 2;
+      matches.push({
+        display_name: `${z.zone}, ${z.borough}`,
+        lat: lat.toFixed(6),
+        lon: lon.toFixed(6),
+      });
+      if (matches.length >= 6) break;
+    }
+  }
+  return matches;
+}
+
 async function searchNominatim(q) {
-  // Tentativa 1: busca exata
-  let results = await fetchPlaces(q);
-  if (results.length) return results;
-
-  // Tentativa 2: remove último caractere (erro de digitação no final, ex: "Underill" → "Underil")
-  if (q.length > 4) {
-    results = await fetchPlaces(q.slice(0, -1));
+  if (geocodingAvailable) {
+    // Tentativa 1: busca exata via backend
+    let results = await fetchPlaces(q);
     if (results.length) return results;
+
+    // Tentativa 2: remove último caractere (erro de digitação no final, ex: "Underill" -> "Underil")
+    if (q.length > 4) {
+      results = await fetchPlaces(q.slice(0, -1));
+      if (results.length) return results;
+    }
+
+    // Tentativa 3: primeira palavra significativa >=4 letras (ex: "Unerhill Avenue" -> "Unerhill" -> "Unerhi")
+    const words = q.trim().split(/\s+/).filter(w => w.length >= 4);
+    if (words.length && words[0].toLowerCase() !== q.trim().toLowerCase()) {
+      results = await fetchPlaces(words[0]);
+      if (results.length) return results;
+    }
   }
 
-  // Tentativa 3: primeira palavra significativa ≥4 letras (ex: "Unerhill Avenue" → "Unerhill" → "Unerhi")
-  const words = q.trim().split(/\s+/).filter(w => w.length >= 4);
-  if (words.length && words[0].toLowerCase() !== q.trim().toLowerCase()) {
-    results = await fetchPlaces(words[0]);
-    if (results.length) return results;
-  }
-
-  return [];
+  // Fallback para publicação estática (GitHub Pages) ou se a busca externa não encontrou:
+  return searchZonesLocally(q);
 }
 
 function setupAutocomplete(inputId, dropdownId, validRef, posKey, markerRef) {
@@ -479,7 +514,7 @@ function setupAutocomplete(inputId, dropdownId, validRef, posKey, markerRef) {
       if (!results.length) {
         const div = document.createElement('div');
         div.className = 'dropdown-item not-found';
-        div.textContent = i18n(geocodingAvailable ? 'not-found' : 'search-offline');
+        div.textContent = i18n('not-found');
         dropdown.appendChild(div);
       } else {
         results.forEach(item => {
