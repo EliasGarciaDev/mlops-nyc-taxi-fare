@@ -102,9 +102,9 @@ const map = L.map('map', {
 });
 L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-  attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions">CARTO</a>',
-  subdomains: 'abcd', maxZoom: 19,
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+  maxZoom: 19,
 }).addTo(map);
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -237,6 +237,10 @@ async function loadServiceArea() {
     document.getElementById('zones-warning').classList.remove('hidden');
   }
   checkState();
+  const oInput = document.getElementById('origin-input');
+  const dInput = document.getElementById('dest-input');
+  if (oInput && !oInput.value && state.originZone) oInput.value = `${state.originZone.zone}, ${state.originZone.borough}`;
+  if (dInput && !dInput.value && state.destZone) dInput.value = `${state.destZone.zone}, ${state.destZone.borough}`;
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -436,9 +440,7 @@ function debounce(fn, ms) {
 // Fetch API e some em silêncio, então as requisições chegavam anônimas. O proxy identifica a
 // aplicação, respeita o limite de uma requisição por segundo e serve do cache o que se repete.
 async function fetchPlaces(q) {
-  // Sem backend - o caso do GitHub Pages - a busca não existe: o proxy é justamente o que
-  // torna a chamada ao Nominatim legítima. Devolver vazio em silêncio faria o usuário digitar
-  // e concluir que o endereço não existe, então a ausência do recurso é sinalizada.
+  if (!geocodingAvailable) return [];
   try {
     const r = await fetch(`/geocode/search?q=${encodeURIComponent(q)}`);
     if (r.status === 404) {
