@@ -11,8 +11,8 @@ Sistema web de MLOps para predição de tarifas de táxi em Nova York (NYC TLC),
 **Interface publicada:** https://eliasgarciadev.github.io/mlops-nyc-taxi-fare/
 
 A versão publicada calcula a tarifa no próprio navegador, usando os mesmos coeficientes que a
-API serviria. A busca por endereço não existe nela, porque depende de um proxy no backend.
-Rodando localmente com `make serve`, a interface fica completa.
+API serviria, e conta com autocompletar local das 263 zonas oficiais da TLC. A busca por endereços
+específicos de rua (via Nominatim) fica ativa ao rodar a aplicação localmente com `make serve`.
 
 ---
 
