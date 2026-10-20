@@ -129,10 +129,10 @@ def apply_fare_rules(
 def calibrate_flat_fare(frame: pd.DataFrame) -> FlatFareCalibration | None:
     """Calcula o excedente médio da tarifa fixa a partir dos dados de treino.
 
-    Calibra sobre as corridas que as zonas confirmam, e não sobre as que declaram o código 2.
-    As três populações foram medidas em 2024-01/02 e a diferença entre elas é pequena - US$ 23,46
-    a 24,06 de excedente -, mas a que as zonas confirmam é a única que coincide com a população
-    onde a regra vai de fato ser aplicada, e foi também a de menor erro (RMSE 8,8810).
+    Calibra sobre as corridas que as zonas confirmam, e não sobre as que declaram o código 2:
+    é a única população que coincide com aquela onde a regra vai de fato ser aplicada, já que a
+    aplicação também decide pelas zonas. Sobre 2024-01/02 o excedente medido assim é de
+    US$ 12,24, valor que viaja no artefato e é refeito a cada retreino.
     """
     required = {"PULocationID", "DOLocationID", TARGET_COLUMN}
     if not required.issubset(frame.columns):

@@ -65,10 +65,12 @@ def default_segments() -> dict[str, Segment]:
     Um modelo que melhora na média e piora só no aeroporto é exatamente o tipo de regressão
     que passa despercebida até o usuário reclamar.
 
-    Os recortes por borough de desembarque respondem à análise de equidade da Fase 5, que
-    mediu 82% de acerto dentro de US$ 5 em Manhattan contra 46% no Bronx: sem eles, o gate
-    aprova um challenger que melhora a média às custas de uma região inteira, porque a média é
-    91% Manhattan. Manhattan não entra - ela domina a média, então a média já a protege.
+    Os recortes por borough de desembarque respondem à análise de equidade, que mediu margem de
+    US$ 4,47 em Manhattan contra US$ 20,54 em Staten Island, e 99,5% de acerto dentro de US$ 5
+    em Manhattan contra 66,8% no Queens entre corridas de até US$ 15. Sem eles, o gate aprova um
+    challenger que melhora a média às custas de uma região inteira, porque a média é
+    majoritariamente Manhattan. Manhattan não entra - ela domina a média, então a média já a
+    protege.
     """
     return {
         "airport": Segment(lambda df: df["is_airport_trip"] == 1),

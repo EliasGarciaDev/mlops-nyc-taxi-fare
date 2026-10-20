@@ -92,8 +92,9 @@ def evaluate_retraining_need(  # noqa: PLR0913
     sobre ele é medível sem esperar mais nada. É por isso que a degradação pode ser um gatilho
     aqui, enquanto o tráfego de produção - corridas simuladas, sem valor real - não serviria.
 
-    A precedência é erro, depois drift, depois calendário: degradação medida é motivo mais
-    forte que deslocamento de entrada, que por sua vez é mais forte que "passou o tempo".
+    A precedência é erro, depois viés, depois drift, depois calendário: degradação medida é
+    motivo mais forte que deslocamento de patamar, que é mais forte que deslocamento de
+    entrada, que por sua vez é mais forte que "passou o tempo".
     """
     if taxi_type not in VALID_TAXI_TYPES:
         raise InvalidTaxiTypeError(f"taxi_type inválido: '{taxi_type}'. Use 'yellow' ou 'green'.")
