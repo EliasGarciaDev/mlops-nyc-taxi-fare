@@ -165,6 +165,16 @@ def _compare_segments(
 
         slice_df = validation_df[segment.predicate(validation_df)]
         if len(slice_df) < segment.min_samples:
+            # Registrado pelo mesmo motivo da coluna ausente: um veto que não rodou precisa
+            # aparecer, senão a ausência de reprovação se confunde com aprovação verificada.
+            logger.info(
+                "segment_skipped_insufficient_samples",
+                extra={
+                    "segment": name,
+                    "sample_count": len(slice_df),
+                    "min_samples": segment.min_samples,
+                },
+            )
             continue
 
         champion_rmse = evaluate_model(champion, slice_df).rmse
