@@ -16,7 +16,7 @@ NOMINATIM_BASE_URL: str = "https://nominatim.openstreetmap.org"
 # A política de uso do Nominatim exige identificação da aplicação. No navegador isso era
 # impossível de garantir, e é uma das razões de a chamada passar pelo backend.
 NOMINATIM_USER_AGENT: str = (
-    "nyc-taxi-fare-predictor/1.0 (TCC IFSul; https://github.com/eliasgarcia/nyc-taxi-fare-predictor)"
+    "nyc-taxi-fare-predictor/1.0 (TCC IFSul; https://github.com/EliasGarciaDev/mlops-nyc-taxi-fare)"
 )
 
 # A mesma política pede no máximo uma requisição por segundo.
