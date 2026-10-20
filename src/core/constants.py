@@ -104,6 +104,27 @@ CRZ_LOCATION_IDS: set[int] = {
     246, 249, 261,
 }
 
+# Hail Exclusionary Zone: onde o boro taxi não pode aceitar embarque de rua - Manhattan ao sul
+# da W 110th St e da E 96th St. Acima dessa linha (Harlem, Washington Heights, Inwood) o
+# embarque é legal, e bloqueá-lo negaria serviço justamente nos bairros que mais dependem do
+# boro taxi. Por isso a lista não é `MANHATTAN_LOCATION_IDS`: onze zonas de Manhattan ficam de
+# fora de propósito.
+#
+# O conjunto foi derivado do comportamento real, não transcrito: sobre 8,5 milhões de embarques
+# de 2024-01 a 2024-03, estas zonas concentram menos de 0,25% de green apesar do movimento de
+# yellow, enquanto as onze zonas de Manhattan fora da lista ficam acima de 5%. O vão entre os
+# dois grupos é de vinte vezes.
+HAIL_EXCLUSIONARY_ZONE_IDS: set[int] = {
+    4, 12, 13, 45, 48, 50, 68, 79, 87, 88, 90, 100, 107, 113, 114, 125, 137, 140, 141,
+    142, 143, 144, 148, 151, 158, 161, 162, 163, 164, 170, 186, 209, 211, 224, 229, 230,
+    231, 232, 233, 234, 236, 237, 238, 239, 246, 249, 261, 262, 263,
+}
+
+# Newark fica em Nova Jersey. A TLC classifica o aeroporto como zona porque um táxi de Nova York
+# leva passageiro até lá, com sobretaxa própria, mas não pode pegar passageiro lá. Vale para as
+# duas frotas.
+OUT_OF_STATE_LOCATION_IDS: set[int] = {1}
+
 # RatecodeID identifica o regime tarifário; não é uma quantidade. Medido em 2024-01/02, a
 # tarifa média do código 4 é maior que a do 5, e a do 6 é a menor de todas - abaixo do padrão.
 # Tratado como número, o modelo é obrigado a assumir uma ordem e um espaçamento que não

@@ -27,6 +27,7 @@ from src.core.constants import (
 )
 from src.core.exceptions import GeocodingError
 from src.core.log import get_logger
+from src.core.service_area import pickup_rejection_reason
 from src.ml.fare_rules import apply_fare_rules
 from src.ml.protocols import LinearModel
 from src.ml.registry import ModelMetadata
@@ -37,6 +38,7 @@ router = APIRouter()
 
 MODEL_UNAVAILABLE_STATUS = 503
 INVALID_TAXI_TYPE_STATUS = 422
+PICKUP_NOT_ALLOWED_STATUS = 422
 GEOCODING_UNAVAILABLE_STATUS = 503
 
 MAX_QUERY_LENGTH = 120
@@ -94,6 +96,20 @@ def require_model(registry: ModelRegistry, taxi_type: str) -> tuple[LinearModel,
 @router.post("/predict", response_model=PredictResponse)
 def predict(request: PredictRequest, registry: RegistryDep) -> PredictResponse:
     model, metadata = require_model(registry, request.taxi_type)
+
+    # Antes de estimar: a regulação decide se esta frota pode sequer embarcar aqui. Recusar na
+    # borda é o que impede a interface de ser a única guardiã da regra (RF04).
+    rejection = pickup_rejection_reason(request.taxi_type, request.PULocationID)
+    if rejection is not None:
+        logger.info(
+            "pickup_rejected",
+            extra={
+                "taxi_type": request.taxi_type,
+                "pu_location_id": request.PULocationID,
+                "reason": rejection,
+            },
+        )
+        raise HTTPException(status_code=PICKUP_NOT_ALLOWED_STATUS, detail=rejection)
 
     pickup_dt = request.pickup_datetime
     is_airport = int(

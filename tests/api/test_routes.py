@@ -7,7 +7,12 @@ from fastapi.testclient import TestClient
 
 from src.api.app import app
 from src.api.routes import get_registry
-from src.core.constants import JFK_FLAT_FARE_AMOUNT, MIN_PLAUSIBLE_TOTAL_AMOUNT
+from src.core.constants import (
+    HAIL_EXCLUSIONARY_ZONE_IDS,
+    JFK_FLAT_FARE_AMOUNT,
+    MIN_PLAUSIBLE_TOTAL_AMOUNT,
+    OUT_OF_STATE_LOCATION_IDS,
+)
 from src.core.months import now_in_nyc
 from src.ml.fare_rules import FlatFareCalibration
 from src.ml.registry import ModelMetadata
@@ -93,6 +98,15 @@ VALID_PAYLOAD = {
     "RatecodeID": 1,
     "pickup_datetime": past_datetime(),
 }
+
+
+# Zonas escolhidas para os testes de área de serviço, verificadas contra as constantes:
+# 33 é Brooklyn, livre para as duas frotas; 42 é Manhattan ao norte da linha da HEZ, onde o
+# boro taxi embarca legalmente; 161 é Midtown, dentro da HEZ.
+BROOKLYN_ZONE_ID = 33
+MANHATTAN_ABOVE_HEZ_ZONE_ID = 42
+MIDTOWN_ZONE_ID = 161
+NEWARK_ZONE_ID = next(iter(OUT_OF_STATE_LOCATION_IDS))
 
 
 class StubRegistry:
@@ -183,9 +197,12 @@ class TestPredict:
         assert corpo["pricing_rule"] == "model"
 
     def test_both_fleets_are_served(self, client_with_model):
+        # Zona do Brooklyn: fora da Hail Exclusionary Zone, então as duas frotas podem embarcar.
+        # A zona padrão do payload serve só à yellow, e usá-la aqui testaria o contrário.
         for frota in ("yellow", "green"):
             resposta = client_with_model.post(
-                "/predict", json={**VALID_PAYLOAD, "taxi_type": frota}
+                "/predict",
+                json={**VALID_PAYLOAD, "taxi_type": frota, "PULocationID": BROOKLYN_ZONE_ID},
             )
             assert resposta.status_code == 200, frota
 
@@ -235,6 +252,59 @@ def registry_with_calibration(model, calibration):
         for frota in ("yellow", "green")
     }
     return StubRegistry({"yellow": model, "green": model}, metadata)
+
+
+class TestServiceArea:
+    """RF04: a regulação decide onde cada frota embarca, e a decisão é do servidor.
+
+    A interface já desabilita o marcador, mas interface não é contrato: uma requisição montada
+    fora dela declarava `taxi_type: green` com embarque em Midtown e recebia preço.
+    """
+
+    def test_green_cannot_pick_up_inside_the_hail_exclusionary_zone(self, client_with_model):
+        resposta = client_with_model.post(
+            "/predict",
+            json={**VALID_PAYLOAD, "taxi_type": "green", "PULocationID": MIDTOWN_ZONE_ID},
+        )
+        assert resposta.status_code == 422
+        assert "Hail Exclusionary Zone" in resposta.json()["detail"]
+
+    def test_green_still_picks_up_in_manhattan_above_the_line(self, client_with_model):
+        """Harlem, Washington Heights e Inwood são de boro taxi: bloqueá-los negaria serviço."""
+        assert MANHATTAN_ABOVE_HEZ_ZONE_ID not in HAIL_EXCLUSIONARY_ZONE_IDS
+        resposta = client_with_model.post(
+            "/predict",
+            json={
+                **VALID_PAYLOAD,
+                "taxi_type": "green",
+                "PULocationID": MANHATTAN_ABOVE_HEZ_ZONE_ID,
+            },
+        )
+        assert resposta.status_code == 200
+
+    def test_yellow_picks_up_anywhere_in_manhattan(self, client_with_model):
+        resposta = client_with_model.post(
+            "/predict",
+            json={**VALID_PAYLOAD, "taxi_type": "yellow", "PULocationID": MIDTOWN_ZONE_ID},
+        )
+        assert resposta.status_code == 200
+
+    @pytest.mark.parametrize("frota", ["yellow", "green"])
+    def test_newark_is_refused_as_an_origin_for_every_fleet(self, client_with_model, frota):
+        resposta = client_with_model.post(
+            "/predict",
+            json={**VALID_PAYLOAD, "taxi_type": frota, "PULocationID": NEWARK_ZONE_ID},
+        )
+        assert resposta.status_code == 422
+        assert "Newark" in resposta.json()["detail"]
+
+    def test_newark_remains_valid_as_a_destination(self, client_with_model):
+        """A regra é sobre embarque: o táxi de Nova York leva até lá, só não pega lá."""
+        resposta = client_with_model.post(
+            "/predict",
+            json={**VALID_PAYLOAD, "taxi_type": "yellow", "DOLocationID": NEWARK_ZONE_ID},
+        )
+        assert resposta.status_code == 200
 
 
 class TestOptionalTripDuration:
