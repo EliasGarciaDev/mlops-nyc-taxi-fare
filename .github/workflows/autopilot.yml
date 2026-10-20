@@ -2,8 +2,14 @@
 # produção precisa ser substituído, reverte para a versão anterior quando ela é melhor,
 # treina o challenger e o promove apenas se ele vencer o campeão na mesma janela.
 #
-# O dia 5 existe porque a TLC publica cada mês com atraso: rodar antes disso encontraria o
-# mês ainda não publicado e o ciclo se seguraria sem fazer nada.
+# O dia do mês é indiferente para o dado: a TLC publica cada mês com dois a quatro meses de
+# atraso, então nenhuma data de execução alcança o mês corrente. O dia 5 é só um ponto fixo, e
+# o ciclo descobre sozinho qual é o mês mais recente publicado a cada execução.
+#
+# O cache do registro de modelos não sobrevive ao intervalo mensal: o GitHub remove caches não
+# acessados há mais de sete dias, então a execução agendada começa sem campeão e promove a
+# primeira versão sem disputa. Enquanto a persistência durável do registro não existir, a
+# demonstração do ciclo completo é a execução sob demanda, com o registro versionado em mãos.
 #
 # Também roda sob demanda, e é assim que o ciclo é demonstrado: escolher a frota verde e um
 # mês publicado faz o sistema decidir, treinar, disputar o gate e promover - ou reprovar - em

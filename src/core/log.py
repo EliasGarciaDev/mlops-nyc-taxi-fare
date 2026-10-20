@@ -33,9 +33,9 @@ def get_correlation_id() -> str | None:
 class JsonFormatter(logging.Formatter):
     """Render each record as one JSON object per line.
 
-    Formato de linha única é o que ferramentas de agregação esperam, e é também o formato
-    que a Fase 4 vai consumir para popular a tabela de predições - o mesmo evento serve
-    para leitura humana e para persistência.
+    Formato de linha única é o que ferramentas de agregação esperam, e é também o que permite
+    acrescentar um destino de persistência sem tocar em quem emite: o mesmo evento serve para
+    leitura humana e para consumo por máquina.
     """
 
     def format(self, record: logging.LogRecord) -> str:

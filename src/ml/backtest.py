@@ -18,8 +18,8 @@ MonthLoader = Callable[[str, YearMonth], pd.DataFrame]
 class RetrainingPolicy(Protocol):
     """Política que determina quais meses passados compõem a janela de treino.
 
-    A política é o objeto de estudo da Fase 5: trocar de política é trocar de estratégia de
-    retreino, e o backtest existe para comparar essas estratégias sobre os mesmos dados.
+    A política é o objeto de estudo: trocar de política é trocar de estratégia de retreino, e o
+    backtest existe para comparar essas estratégias sobre os mesmos dados.
     """
 
     def training_months(

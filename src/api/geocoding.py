@@ -14,6 +14,7 @@ logger = get_logger(__name__)
 NOMINATIM_BASE_URL: str = "https://nominatim.openstreetmap.org"
 
 # A política de uso do Nominatim exige identificação da aplicação. No navegador isso era
+# impossível de garantir, e é uma das razões de a chamada passar pelo backend.
 NOMINATIM_USER_AGENT: str = (
     "nyc-taxi-fare-predictor/1.0 (TCC IFSul; https://github.com/eliasgarcia/nyc-taxi-fare-predictor)"
 )
@@ -26,6 +27,7 @@ DEFAULT_CACHE_SIZE: int = 512
 DEFAULT_SEARCH_LIMIT: int = 5
 
 # Casas decimais usadas para agrupar consultas reversas. Quatro casas são cerca de onze metros
+# no terreno: arredondar aí faz dois cliques na mesma calçada reusarem a mesma resposta.
 REVERSE_PRECISION: int = 4
 
 # Recorte da cidade, para que a busca não devolva homônimos de outros estados.

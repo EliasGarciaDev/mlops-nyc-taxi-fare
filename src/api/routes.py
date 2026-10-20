@@ -147,8 +147,8 @@ def predict(request: PredictRequest, registry: RegistryDep) -> PredictResponse:
         metadata.flat_fare_calibration,
     )
 
-    # Este evento é o registro de predição da Fase 4: os campos são exatamente os da tabela
-    # prediction_logs, de modo que persistir passe a ser acrescentar um destino ao log.
+    # O evento carrega a requisição inteira junto da resposta, e não só a tarifa: é o que
+    # permite reconstruir depois por que uma predição saiu como saiu, sem guardar estado.
     logger.info(
         "prediction_served",
         extra={

@@ -179,10 +179,12 @@ MIN_FARE_AMOUNT: float = 0.01
 MAX_FARE_AMOUNT: float = 500.0
 
 # O total pago também precisa de faixa de sanidade: negativo é estorno, e valores muito acima
+# do teto plausível são erro de registro, não corrida cara.
 MIN_TOTAL_AMOUNT: float = 0.01
 MAX_TOTAL_AMOUNT: float = 1000.0
 
 # Piso do que se pode cobrar de uma corrida: initial charge de US$ 3,00 mais as duas sobretaxas
+# fixas da TLC. Abaixo disso o valor não corresponde a nenhuma tarifa que o taxímetro produza.
 MIN_PLAUSIBLE_TOTAL_AMOUNT: float = 4.50
 MIN_TRIP_DISTANCE: float = 0.01
 MAX_TRIP_DISTANCE: float = 200.0
@@ -198,6 +200,7 @@ MIN_MONTH: int = 1
 MAX_MONTH: int = 12
 
 # Primeiro mês que este projeto suporta. Anterior a isso o esquema publicado pela TLC
+# diverge o bastante para exigir um caminho de leitura próprio, sem ganho para o estudo.
 FIRST_SUPPORTED_MONTH: tuple[int, int] = (2024, 1)
 
 # A TLC publica cada mês com atraso, e o atraso NÃO é constante: em 2026-09 o mês mais

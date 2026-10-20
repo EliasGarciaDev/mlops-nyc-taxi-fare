@@ -86,7 +86,8 @@ def _attempt_rollback(
     if need.champion_version is None or need.champion_rmse is None:
         return None
 
-    # Reverter duas vezes seguidas é oscilar. Ojustifica o rollback como a resposta
+    # Reverter duas vezes seguidas é oscilar entre dois modelos sem produzir nenhum novo. O que
+    # justifica o rollback é ele ser mais barato que treinar; repetido, deixa de ser.
     if last_promotion_reason(taxi_type, models_dir) is PromotionReason.ROLLBACK:
         logger.info(
             "rollback_skipped_after_rollback",

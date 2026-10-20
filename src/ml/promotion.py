@@ -13,6 +13,7 @@ from src.ml.trainer import ModelMetrics, evaluate_model
 logger = get_logger(__name__)
 
 # Margem mínima de melhora para valer uma troca. Melhora abaixo disso está dentro do ruído
+# entre duas janelas e não paga o risco de trocar o que já está servindo.
 DEFAULT_MIN_IMPROVEMENT: float = 0.01
 
 # Quanto um segmento pode piorar sem barrar a promoção. Zero reprovaria qualquer challenger,
@@ -23,6 +24,8 @@ DEFAULT_MAX_SEGMENT_REGRESSION: float = 0.05
 MIN_SEGMENT_SAMPLES: int = 50
 
 # Geografia precisa de um mínimo próprio, e muito maior. Medido em 2026-08-27 com o mesmo
+# limiar dos demais recortes, um borough de baixo volume oscilava acima da tolerância entre
+# execuções sem que nada tivesse mudado, e reprovava challengers por ruído amostral.
 MIN_GEOGRAPHIC_SEGMENT_SAMPLES: int = 10_000
 
 NIGHT_START_HOUR: int = 22

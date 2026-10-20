@@ -1,6 +1,7 @@
 import math
 
 # Tolerância de simplificação em graus. Cerca de onze metros na latitude de Nova York - abaixo
+# da largura de uma calçada, então a fronteira desenhada continua caindo na rua certa.
 DEFAULT_SIMPLIFY_TOLERANCE: float = 0.0001
 
 Point = tuple[float, float]

@@ -25,6 +25,7 @@ from src.monitoring.drift import ReferenceProfile
 logger = get_logger(__name__)
 
 # Precisão de milissegundos, e não de segundos: um ciclo de retreino sobre dados em cache
+# termina duas frotas dentro do mesmo segundo, e duas versões com o mesmo nome se sobrescrevem.
 VERSION_TIMESTAMP_FORMAT = "%Y%m%dT%H%M%S%fZ"
 CURRENT_POINTER_FILENAME = "current.json"
 # Histórico append-only de promoções. Existe porque a ordem de gravação do registro não é a
@@ -79,6 +80,7 @@ class ModelMetadata:
     validation_metrics: ModelMetrics
     library_versions: dict[str, str]
     # Baseline de drift da janela de treino. Opcional porque artefatos anteriores a esta
+    # versão não o gravavam, e continuam carregáveis: sem ele o monitoramento se abstém.
     reference_profile: ReferenceProfile | None = None
     # Motivo do disparo do retreino. Sem ele, "por que este modelo foi treinado?" não tem
     # resposta meses depois - e num sistema que retreina sozinho essa pergunta é frequente.
@@ -341,6 +343,7 @@ def promotion_history(taxi_type: str, models_dir: Path) -> list[str]:
             version = str(entry["model_version"])
         except (json.JSONDecodeError, CorruptedMetadataError, KeyError) as exc:
             # Uma escrita interrompida - o processo morrendo no meio do append - deixa a última
+            # linha truncada, e adivinhar o que ela dizia escolheria para onde o rollback volta.
             raise CorruptedPromotionLogError(
                 f"Linha {number} de {log_path} ilegível: {exc}. "
                 f"O histórico de promoções precisa ser reparado para o rollback voltar a valer."

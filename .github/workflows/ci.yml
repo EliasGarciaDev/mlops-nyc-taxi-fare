@@ -1,7 +1,7 @@
 # Verificação contínua: o mesmo make check + make test que rodam localmente.
 # O Makefile é a fonte da verdade dos comandos; o workflow só provê o ambiente.
-# Pré-requisito do retreino agendado da Fase 5, que vai depender de um repositório
-# comprovadamente verde antes de publicar um artefato novo.
+# Pré-requisito do retreino agendado, que depende de um repositório comprovadamente verde
+# antes de publicar um artefato novo.
 
 name: CI
 
@@ -16,7 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # A versão do Python é fixada aqui de propósito : o requires-python do
+      # A versão do Python é fixada aqui de propósito: o requires-python do
       # pyproject declara 3.12 mas não tem como impor - o CI é quem impõe.
       - uses: actions/setup-python@v5
         with:

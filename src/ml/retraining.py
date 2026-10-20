@@ -80,10 +80,10 @@ def run_retraining_cycle(
 ) -> RetrainingCycle:
     """Executa o ciclo de retreino e submete o challenger ao gate de promoção.
 
-    É aqui que as peças da Fase 5 se encontram: o treino produz o candidato, o gate compara
-    os dois sobre o mesmo mês de validação, e o ponteiro só é reescrito se o challenger
-    vencer. O artefato reprovado permanece em disco - "por que este modelo não entrou?"
-    precisa poder ser respondido olhando o que foi treinado.
+    É aqui que as peças se encontram: o treino produz o candidato, o gate compara os dois sobre
+    o mesmo mês de validação, e o ponteiro só é reescrito se o challenger vencer. O artefato
+    reprovado permanece em disco - "por que este modelo não entrou?" precisa poder ser
+    respondido olhando o que foi treinado.
     """
     if taxi_type not in VALID_TAXI_TYPES:
         raise InvalidTaxiTypeError(f"taxi_type inválido: '{taxi_type}'. Use 'yellow' ou 'green'.")
