@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 
 from src.core.config import MODELS_DIR
@@ -59,16 +60,20 @@ class RetrainingNeed:
     baseline_bias: float | None = None
 
 
-def _months_behind(training_months: list[str], latest_published: YearMonth) -> int:
-    """Calcula quantos meses publicados o modelo ativo ainda não processou."""
-    if not training_months:
-        return 0
-    year, month = (int(part) for part in training_months[-1].split("-"))
-    last_trained = YearMonth(year, month)
+def _months_behind(validation_cutoff: datetime, latest_published: YearMonth) -> int:
+    """Calcula quantos meses publicados o modelo ativo ainda não processou.
+
+    A referência é o corte de validação, e não o último item de `training_months`. Os dois
+    caminhos que gravam artefato preenchem essa lista com semânticas diferentes - o pipeline de
+    treino inclui o mês de validação, o ciclo de retreino o reserva de fora -, e contar por ela
+    faria dois modelos com o mesmo conhecimento parecerem um mês distantes um do outro. O corte
+    marca o início do mês sobre o qual o modelo foi avaliado, que é o último que ele viu.
+    """
+    last_seen = YearMonth(validation_cutoff.year, validation_cutoff.month)
     return max(
         0,
-        (latest_published.year - last_trained.year) * 12
-        + (latest_published.month - last_trained.month),
+        (latest_published.year - last_seen.year) * 12
+        + (latest_published.month - last_seen.month),
     )
 
 
@@ -106,7 +111,7 @@ def evaluate_retraining_need(  # noqa: PLR0913
             drift_report=None,
         )
 
-    behind = _months_behind(metadata.training_months, latest_published)
+    behind = _months_behind(metadata.validation_cutoff, latest_published)
     if behind == 0:
         return RetrainingNeed(
             should_retrain=False,

@@ -136,7 +136,9 @@ class TestAutomaticRollback:
                 validation_metrics=metrics,
             ),
             [str(FEB)],
-            MAR.first_day(),
+            # O corte de validação acompanha o mês treinado: é ele que diz até onde o modelo
+            # enxergou, e é por ele que o ciclo conta quantos meses publicados ainda não viu.
+            FEB.first_day(),
             tmp_path,
         )
         promote_version("yellow", bad.model_version, tmp_path)

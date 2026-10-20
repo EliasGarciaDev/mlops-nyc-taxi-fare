@@ -11,6 +11,7 @@ from src.ml.retraining import RetrainingTrigger
 from src.ml.trainer import ModelMetrics, TrainingResult
 from src.monitoring.drift import build_reference_profile
 from src.monitoring.triggers import (
+    _months_behind,
     evaluate_retraining_need,
 )
 
@@ -98,6 +99,62 @@ class TestNoChampion:
 # ---------------------------------------------------------------------------
 # 2. Calendário: chegou dado novo o suficiente
 # ---------------------------------------------------------------------------
+
+
+class TestMonthsBehindAccounting:
+    """Os dois caminhos que gravam artefato precisam contar o mesmo atraso.
+
+    `run_training_pipeline` grava em `training_months` a janela inteira, incluindo o mês de
+    validação; `run_retraining_cycle` reserva esse mês de fora. Contar pelo último item da lista
+    fazia dois modelos com o mesmo conhecimento parecerem um mês distantes, e o gatilho de
+    calendário disparava mais cedo para um deles. O corte de validação não tem essa ambiguidade.
+    """
+
+    def test_both_write_paths_agree_on_the_same_knowledge(self, tmp_path):
+        """O mesmo conhecimento gravado pelas duas convenções tem de render o mesmo atraso.
+
+        Treinado em janeiro e fevereiro, avaliado em março. O pipeline registra os três meses em
+        `training_months`; o ciclo registra só os dois de treino. O corte de validação é março
+        nos dois, porque é o mês sobre o qual o modelo foi avaliado.
+        """
+        treino = pd.concat(
+            [make_month_frame(mes) for mes in (JAN, FEB)], ignore_index=True
+        )
+        modelo = LinearRegression().fit(treino[FEATURE_ORDER], treino[TARGET_COLUMN])
+        metricas = ModelMetrics(rmse=0.001, mae=0.001, r2=0.99, sample_count=len(treino), bias=0.0)
+
+        def gravar(training_months: list[str], subdir: str):
+            return save_model(
+                TrainingResult(
+                    model=modelo,
+                    taxi_type="yellow",
+                    trained_at=datetime(2024, 4, 1, tzinfo=UTC),
+                    train_metrics=metricas,
+                    validation_metrics=metricas,
+                ),
+                training_months,
+                MAR.first_day(),
+                tmp_path / subdir,
+            )
+
+        como_pipeline = gravar([str(JAN), str(FEB), str(MAR)], "pipeline")
+        como_ciclo = gravar([str(JAN), str(FEB)], "ciclo")
+
+        assert como_pipeline.training_months != como_ciclo.training_months
+        assert _months_behind(como_pipeline.validation_cutoff, MAY) == _months_behind(
+            como_ciclo.validation_cutoff, MAY
+        )
+        assert _months_behind(como_ciclo.validation_cutoff, MAY) == 2
+
+    def test_a_model_that_already_covers_the_latest_month_is_not_behind(self):
+        assert _months_behind(MAR.first_day(), MAR) == 0
+
+    def test_a_cutoff_ahead_of_the_published_month_never_goes_negative(self):
+        """Registro restaurado de um ambiente adiantado não deve virar atraso negativo."""
+        assert _months_behind(MAY.first_day(), MAR) == 0
+
+    def test_it_counts_across_the_year_boundary(self):
+        assert _months_behind(datetime(2023, 11, 1), YearMonth(2024, 2)) == 3
 
 
 class TestCalendarTrigger:
